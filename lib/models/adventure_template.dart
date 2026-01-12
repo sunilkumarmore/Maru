@@ -18,6 +18,7 @@ class AdventureTemplate {
   final List<String> slots; // ["hero","place",...]
   final Map<String, List<AdventureChoice>> choices; // slot -> choices
   final List<AdventurePageTemplate> pages; // text with {tokens}
+  final String? coverAsset;
 
   AdventureTemplate({
     required this.id,
@@ -26,6 +27,7 @@ class AdventureTemplate {
     required this.slots,
     required this.choices,
     required this.pages,
+    required this.coverAsset,
   });
 
   factory AdventureTemplate.fromJson(Map<String, dynamic> json) {
@@ -51,8 +53,10 @@ class AdventureTemplate {
       slots: slots,
       choices: parsedChoices,
       pages: pages,
+      coverAsset: json['coverAsset'] as String?,
     );
   }
+
 }
 
 class AdventureChoice {

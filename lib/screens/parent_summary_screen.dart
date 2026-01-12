@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:suzyapp/widgets/parent_gate_dialog.dart';
+
 import '../design_system/app_colors.dart';
 import '../design_system/app_radius.dart';
 import '../design_system/app_spacing.dart';
@@ -6,14 +8,45 @@ import '../models/reading_progress.dart';
 import '../models/story_progress.dart';
 import '../repositories/progress_repository.dart';
 
-class ParentSummaryScreen extends StatelessWidget {
+class ParentSummaryScreen extends StatefulWidget {
   final ProgressRepository progressRepository;
 
   const ParentSummaryScreen({super.key, required this.progressRepository});
 
+  @override
+  State<ParentSummaryScreen> createState() => _ParentSummaryScreenState();
+}
+
+class _ParentSummaryScreenState extends State<ParentSummaryScreen> {
+  late Future<_ParentSummaryVM> _future;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 🔐 Hard gate: prevents route deep-link access on web
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final allowed = await showParentGate(context);
+      if (!allowed && mounted) {
+        Navigator.pop(context);
+        return;
+      }
+      if (mounted) {
+        setState(() {
+          _future = _load();
+        });
+      }
+    });
+
+    // placeholder until gate passes
+    _future = Future<_ParentSummaryVM>.value(
+      _ParentSummaryVM(completed: 0, inProgress: 0, totalTouched: 0, lastRead: null),
+    );
+  }
+
   Future<_ParentSummaryVM> _load() async {
-    final ReadingProgress? rp = await progressRepository.getReadingProgress();
-    final List<StoryProgress> all = await progressRepository.getAllStoryProgress();
+    final ReadingProgress? rp = await widget.progressRepository.getReadingProgress();
+    final List<StoryProgress> all = await widget.progressRepository.getAllStoryProgress();
 
     final completed = all.where((p) => p.completed).length;
     final inProgress = all.where((p) => !p.completed).length;
@@ -51,7 +84,7 @@ class ParentSummaryScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.large),
         child: FutureBuilder<_ParentSummaryVM>(
-          future: _load(),
+          future: _future,
           builder: (context, snap) {
             if (snap.connectionState != ConnectionState.done) {
               return const Center(child: CircularProgressIndicator());
@@ -59,6 +92,7 @@ class ParentSummaryScreen extends StatelessWidget {
             if (snap.hasError) {
               return Center(child: Text('Error: ${snap.error}'));
             }
+
             final vm = snap.data!;
 
             return ListView(
@@ -80,6 +114,12 @@ class ParentSummaryScreen extends StatelessWidget {
                   value: vm.lastRead == null ? '—' : _formatDateTime(vm.lastRead!),
                   subtitle: 'Most recent reading activity',
                 ),
+               
+OutlinedButton(
+  onPressed: () => Navigator.pushNamed(context, '/privacy'),
+  child: const Text('Privacy Policy'),
+),
+
                 const SizedBox(height: AppSpacing.medium),
                 _Card(
                   title: 'Stories Touched',
@@ -87,6 +127,16 @@ class ParentSummaryScreen extends StatelessWidget {
                   subtitle: 'Unique stories opened',
                 ),
                 const SizedBox(height: AppSpacing.large),
+
+                OutlinedButton(
+                 onPressed: () {
+  Navigator.pushNamed(context, '/parent-voice');
+},
+                  child: const Text('Parent Voice Settings'),
+                ),
+
+                const SizedBox(height: AppSpacing.large),
+
                 Text(
                   'Note: This is a lightweight v1 summary. No personal data is collected.',
                   style: TextStyle(color: AppColors.textSecondary.withOpacity(0.9)),
@@ -143,11 +193,14 @@ class _Card extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
-              const SizedBox(height: AppSpacing.xsmall),
-              Text(subtitle, style: TextStyle(color: AppColors.textSecondary)),
-            ]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+                const SizedBox(height: AppSpacing.xsmall),
+                Text(subtitle, style: TextStyle(color: AppColors.textSecondary)),
+              ],
+            ),
           ),
           const SizedBox(width: AppSpacing.medium),
           Text(

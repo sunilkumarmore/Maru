@@ -4,14 +4,17 @@ class Story {
   final String language; // 'en' | 'te' | 'mixed'
   //final String difficulty; // 'Easy' | 'Medium' | 'Hard'
   final List<StoryPage> pages;
-  final String ageBand; // e.g. '2-3', '4-5', '6-7',
+  final String ageBand; 
+  final String? coverAsset;// e.g. '2-3', '4-5', '6-7',
 
   Story({
     required this.id,
     required this.title,
     required this.language,
     required this.pages,
-    required this.ageBand
+    required this.ageBand,
+    required this.coverAsset
+    
   });
 }
 
@@ -23,7 +26,6 @@ class StoryPage {
   final List<StoryChoice> choices;
   final String? audioUrl;
 final String? audioAsset;
-
 final String? backgroundAsset;
 final String? heroAsset;
 final String? friendAsset;

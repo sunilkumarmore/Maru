@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:suzyapp/widgets/parent_gate_dialog.dart';
+
 import '../design_system/app_breakpoints.dart';
 import '../design_system/app_colors.dart';
 import '../design_system/app_radius.dart';
 import '../design_system/app_spacing.dart';
 import '../design_system/app_typography.dart';
+
 import '../models/reading_progress.dart';
 import '../repositories/progress_repository.dart';
 import '../repositories/story_repository.dart';
-import '../main.dart'; // for StoryReaderArgs if defined there
+import '../main.dart'; // StoryReaderArgs
 
 class HomeScreen extends StatefulWidget {
   final StoryRepository storyRepository;
@@ -33,10 +36,32 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadProgress() async {
-    final p = await widget.progressRepository.getLastProgress();
+    // ✅ Use new API name
+    final p = await widget.progressRepository.getReadingProgress();
     if (!mounted) return;
     setState(() => _progress = p);
   }
+
+  Future<void> _openCreate() async {
+    // 🔐 Parent gate recommended for creation flows
+    final allowed = await showParentGate(context);
+    if (!allowed) return;
+
+    await Navigator.pushNamed(context, '/create');
+    if (!mounted) return;
+    await _loadProgress();
+  }
+
+  Future<void> _openParentSummary() async {
+    final allowed = await showParentGate(context);
+    if (!allowed) return;
+
+    await Navigator.pushNamed(context, '/parent-summary');
+  }
+
+Future<void> _openParentVoiceSettings() async {
+  await Navigator.pushNamed(context, '/parent-voice');
+}
 
   @override
   Widget build(BuildContext context) {
@@ -86,15 +111,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: AppSpacing.medium),
 
-                // NEW: Create a Story tile (does NOT affect existing tiles)
-                 
-              _BigTile(
-  title: 'Create a Story',
-  subtitle: 'Pick characters and make your own',
-  color: AppColors.tileYellow, // or AppColors.accentCoral if you prefer
-  icon: Icons.auto_stories,
-  onTap: () => Navigator.pushNamed(context, '/create'),
-),
+                // 🔐 Gate Create
+                _BigTile(
+                  title: 'Create a Story',
+                  subtitle: 'Pick characters and make your own',
+                  color: AppColors.tileYellow,
+                  icon: Icons.auto_stories,
+                  onTap: _openCreate,
+                ),
               ] else ...[
                 Row(
                   children: [
@@ -111,12 +135,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: AppSpacing.medium),
                     Expanded(
                       child: _BigTile(
-        title: 'Create a Story',
-        subtitle: 'Pick characters and make your own',
-        color: AppColors.tileYellow,
-        icon: Icons.auto_stories,
-        onTap: () => Navigator.pushNamed(context, '/create'),
-                    ),
+                        title: 'Create a Story',
+                        subtitle: 'Pick characters and make your own',
+                        color: AppColors.tileYellow,
+                        icon: Icons.auto_stories,
+                        onTap: _openCreate,
+                      ),
                     ),
                   ],
                 ),
@@ -126,10 +150,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
               Align(
                 alignment: Alignment.centerRight,
-                child: TextButton(
-                  // use the route you already have in main.dart
-                  onPressed: () => Navigator.pushNamed(context, '/parent-summary'),
-                  child: const Text('Parents'),
+                child: Wrap(
+                  spacing: 10,
+                  children: [
+                    // Optional: direct shortcut to voice settings
+                    TextButton(
+                      onPressed: _openParentVoiceSettings,
+                      child: const Text('Voice Settings'),
+                    ),
+                    TextButton(
+                      onPressed: _openParentSummary,
+                      child: const Text('Parents'),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -235,55 +268,6 @@ class _BigTile extends StatelessWidget {
               ),
             ),
             const Icon(Icons.chevron_right, size: 34, color: Colors.white),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CreateTile extends StatelessWidget {
-  final VoidCallback onTap;
-  const _CreateTile({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(AppRadius.large),
-      onTap: onTap,
-      child: Container(
-        height: 120,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.large,
-          vertical: AppSpacing.medium,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.large),
-          border: Border.all(color: Colors.black12),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.auto_stories, size: 42),
-            const SizedBox(width: AppSpacing.medium),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'Create a Story',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-                  ),
-                  SizedBox(height: AppSpacing.xsmall),
-                  Text(
-                    'Pick characters and make your own',
-                    style: TextStyle(fontSize: 14, height: 1.2),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, size: 34),
           ],
         ),
       ),

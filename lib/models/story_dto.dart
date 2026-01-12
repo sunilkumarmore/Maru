@@ -6,6 +6,7 @@ class StoryDto {
   final List<PageDto> pages;
     final String? audioUrl;
 final String? audioAsset;
+final String? coverAsset;
 
   StoryDto({
     required this.id,
@@ -15,6 +16,7 @@ final String? audioAsset;
     required this.pages,
     required this.audioUrl,
     this.audioAsset,
+    this.coverAsset
   });
 
   factory StoryDto.fromJson(Map<String, dynamic> j) {
@@ -26,8 +28,11 @@ final String? audioAsset;
       pages: (j['pages'] as List).map((e) => PageDto.fromJson(e)).toList(),
       audioUrl: j['audioUrl'],
       audioAsset: j['audioAsset'],
+      coverAsset: j['coverAsset']
     );
   }
+
+ 
 }
 
 class PageDto {

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:suzyapp/models/story_progress.dart';
+import 'package:suzyapp/utils/asset_path.dart';
+
 import '../design_system/app_colors.dart';
 import '../design_system/app_radius.dart';
 import '../design_system/app_spacing.dart';
 import '../main.dart'; // StoryReaderArgs
-import '../models/reading_progress.dart';
 import '../models/story.dart';
 import '../repositories/progress_repository.dart';
 import '../repositories/story_repository.dart';
@@ -25,10 +26,10 @@ class StoryLibraryScreen extends StatefulWidget {
 
 class _StoryLibraryScreenState extends State<StoryLibraryScreen> {
   String _search = '';
-  String? _language;   // null = all
+  String? _language; // null = all
   String? _ageBand; // null = all
 
-Map<String, StoryProgress> _progressByStoryId = {};
+  Map<String, StoryProgress> _progressByStoryId = {};
   late Future<List<Story>> _future;
 
   @override
@@ -38,20 +39,20 @@ Map<String, StoryProgress> _progressByStoryId = {};
     _loadProgress();
   }
 
- Future<void> _loadProgress() async {
-  final list = await widget.progressRepository.getAllStoryProgress();
-  if (!mounted) return;
-  setState(() {
-    _progressByStoryId = { for (final p in list) p.storyId : p };
-  });
-}
+  Future<void> _loadProgress() async {
+    final list = await widget.progressRepository.getAllStoryProgress();
+    if (!mounted) return;
+    setState(() {
+      _progressByStoryId = {for (final p in list) p.storyId: p};
+    });
+  }
 
   Future<List<Story>> _load() {
     return widget.storyRepository.listStories(
       query: StoryQuery(
-         searchText: _search,
-    language: _language,
-    ageBand: _ageBand,
+        searchText: _search,
+        language: _language,
+        ageBand: _ageBand,
       ),
     );
   }
@@ -94,27 +95,26 @@ Map<String, StoryProgress> _progressByStoryId = {};
             _FiltersRow(
               language: _language,
               ageBand: _ageBand,
-         onLanguage: (v) {
-  setState(() {
-    _language = v;
-    _future = _load();
-  });
-},
-onAgeband: (v) {
-  setState(() {
-    _ageBand = v;
-    _future = _load();
-  });
-},
-
-          onClear: () {
-  setState(() {
-    _search = '';
-    _language = null;
-    _ageBand = null;
-    _future = _load();
-  });
-},
+              onLanguage: (v) {
+                setState(() {
+                  _language = v;
+                  _future = _load();
+                });
+              },
+              onAgeband: (v) {
+                setState(() {
+                  _ageBand = v;
+                  _future = _load();
+                });
+              },
+              onClear: () {
+                setState(() {
+                  _search = '';
+                  _language = null;
+                  _ageBand = null;
+                  _future = _load();
+                });
+              },
             ),
             const SizedBox(height: AppSpacing.large),
             Expanded(
@@ -143,24 +143,25 @@ onAgeband: (v) {
                     ),
                     itemBuilder: (context, i) {
                       final s = stories[i];
-                    //  final inProgress = _progress != null && _progress!.storyId == s.id;
-                    final sp = _progressByStoryId[s.id];
-final inProgress = sp != null && !sp.completed;
-final startIndex = sp?.lastPageIndex;
+                      final sp = _progressByStoryId[s.id];
+                      final inProgress = sp != null && !sp.completed;
+                      final startIndex = sp?.lastPageIndex;
+
+                      // debugPrint('COVER for ${s.id}: ${s.coverAsset}');
 
                       return _StoryCard(
                         story: s,
                         inProgress: inProgress,
                         onTap: () async {
-                        await Navigator.pushNamed(
-  context,
-  '/reader',
-  arguments: StoryReaderArgs(
-    s.id,
-    startPageIndex: inProgress ? startIndex : null,
-  ),
-);
-await _loadProgress();
+                          await Navigator.pushNamed(
+                            context,
+                            '/reader',
+                            arguments: StoryReaderArgs(
+                              s.id,
+                              startPageIndex: inProgress ? startIndex : null,
+                            ),
+                          );
+                          await _loadProgress();
                         },
                       );
                     },
@@ -227,10 +228,10 @@ class _FiltersRow extends StatelessWidget {
 
   const _FiltersRow({
     required this.language,
+    required this.ageBand,
     required this.onLanguage,
     required this.onAgeband,
     required this.onClear,
-     required this.ageBand,
   });
 
   @override
@@ -250,18 +251,17 @@ class _FiltersRow extends StatelessWidget {
           ],
           onChanged: onLanguage,
         ),
-      _ChipDropdown(
-  label: 'Age',
-  value: ageBand,
-  items: const [
-    DropdownMenuItem(value: null, child: Text('All')),
-    DropdownMenuItem(value: '2-3', child: Text('2–3')),
-    DropdownMenuItem(value: '4-5', child: Text('4–5')),
-    DropdownMenuItem(value: '6-7', child: Text('6–7')),
-  ],
-  onChanged: onAgeband,
-),
-
+        _ChipDropdown(
+          label: 'Age',
+          value: ageBand,
+          items: const [
+            DropdownMenuItem(value: null, child: Text('All')),
+            DropdownMenuItem(value: '2-3', child: Text('2–3')),
+            DropdownMenuItem(value: '4-5', child: Text('4–5')),
+            DropdownMenuItem(value: '6-7', child: Text('6–7')),
+          ],
+          onChanged: onAgeband,
+        ),
         TextButton.icon(
           onPressed: onClear,
           icon: const Icon(Icons.refresh),
@@ -338,6 +338,10 @@ class _StoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent = _accentFor(story);
 
+    // coverAsset is sometimes empty for now; treat it as empty string safely.
+    //final cover = (story.coverAsset ?? '').trim();
+    final cover = AssetPath.normalize(story.coverAsset);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.large),
@@ -356,6 +360,7 @@ class _StoryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Top: cover area (fixed height), always clipped
             Container(
               height: 120,
               decoration: BoxDecoration(
@@ -366,46 +371,90 @@ class _StoryCard extends StatelessWidget {
                 ),
               ),
               child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Center(child: Icon(Icons.image, size: 48, color: accent)),
-                 if (inProgress)
-  Positioned(
-    top: 10,
-    left: 10,
-    child: _Badge(text: 'Continue', color: AppColors.accentCoral),
-  ),
+                  if (cover.isNotEmpty)
+                    ClipRRect(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(AppRadius.large),
+                        topRight: Radius.circular(AppRadius.large),
+                      ),
+                      child: Image.asset(
+                        cover,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, e, __) {
+                          debugPrint('Cover load error for ${story.id}: $e');
+                          return Center(
+                            child: Icon(Icons.image_not_supported, size: 48, color: accent),
+                          );
+                        },
+                      ),
+                    )
+                  else
+                    Center(child: Icon(Icons.image, size: 48, color: accent)),
+
+                  // subtle overlay so the badge pops on bright covers
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(AppRadius.large),
+                        topRight: Radius.circular(AppRadius.large),
+                      ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.22),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  if (inProgress)
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: _Badge(text: 'Continue', color: AppColors.accentCoral),
+                    ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.medium),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    story.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.small),
-                  Wrap(
-                    spacing: AppSpacing.small,
-                    children: [
-                      _Badge(text: story.ageBand, color: accent),
-                      _Badge(
-                        text: story.language.toUpperCase(),
-                        color: AppColors.textSecondary,
-                        fill: AppColors.textSecondary.withOpacity(0.12),
+
+            // Bottom: make it flexible to prevent overflow in grid cells
+            Flexible(
+  fit: FlexFit.loose,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.medium),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      story.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        height: 1.2,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: AppSpacing.small),
+                    Wrap(
+                      spacing: AppSpacing.small,
+                      runSpacing: AppSpacing.small,
+                      children: [
+                        _Badge(text: story.ageBand, color: accent),
+                        _Badge(
+                          text: story.language.toUpperCase(),
+                          color: AppColors.textSecondary,
+                          fill: AppColors.textSecondary.withOpacity(0.12),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

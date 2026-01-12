@@ -77,6 +77,7 @@ class _CreateAdventureScreenState extends State<CreateAdventureScreen> {
       language: 'en',
       ageBand: t.ageBand,
       pages: pages,
+      coverAsset: t.coverAsset
     );
   }
 

@@ -21,6 +21,7 @@ Story _toDomain(StoryDto d) {
     title: d.title,
     language: d.language,
     ageBand: d.ageBand,
+    coverAsset: (d.coverAsset ?? '').trim(),
    pages: List.generate(d.pages.length, (i) {
   final p = d.pages[i];
  return StoryPage(

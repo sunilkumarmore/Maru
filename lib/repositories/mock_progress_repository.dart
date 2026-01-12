@@ -33,7 +33,9 @@ class MockProgressRepository implements ProgressRepository {
 
   @override
   Future<List<StoryProgress>> getAllStoryProgress() async {
-    return _storyProgressMap.values.toList();
+     final list = _storyProgressMap.values.toList();
+  list.sort((a, b) => b.lastOpenedAt.compareTo(a.lastOpenedAt));
+  return list;
   }
 
   @override

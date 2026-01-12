@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:suzyapp/utils/asset_path.dart';
 import '../design_system/app_radius.dart';
 import '../design_system/app_colors.dart';
 
 class AdventureScene extends StatelessWidget {
   final String? backgroundAsset; // e.g. assets/scenes/bg_park.png
-  final String? heroAsset;       // e.g. assets/characters/bear.png
-  final String? friendAsset;     // optional
-  final String? objectAsset;     // optional
-  final String? emotionEmoji;    // optional "😊"
+  final String? heroAsset; // e.g. assets/characters/bear.png
+  final String? friendAsset; // optional
+  final String? objectAsset; // optional
+  final String? emotionEmoji; // optional "😊"
 
   const AdventureScene({
     super.key,
@@ -20,6 +21,10 @@ class AdventureScene extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bg = AssetPath.normalize(backgroundAsset);
+    final hero = AssetPath.normalize(heroAsset);
+    final friend = AssetPath.normalize(friendAsset);
+    final obj = AssetPath.normalize(objectAsset);
     return AspectRatio(
       // keeps scene proportions stable across devices
       aspectRatio: 16 / 10,
@@ -41,8 +46,8 @@ class AdventureScene extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   // 1) Background
-                  if (backgroundAsset != null && backgroundAsset!.isNotEmpty)
-                    Image.asset(backgroundAsset!, fit: BoxFit.cover)
+                  if (bg.isNotEmpty)
+                    Image.asset(bg, fit: BoxFit.cover)
                   else
                     _softGradientFallback(),
 
@@ -50,35 +55,34 @@ class AdventureScene extends StatelessWidget {
                   Container(color: Colors.black.withOpacity(0.03)),
 
                   // 2) Hero (center-bottom)
-                  if (heroAsset != null && heroAsset!.isNotEmpty)
+                  if (hero.isNotEmpty)
                     Positioned(
                       left: (w - heroSize) / 2,
                       top: h - heroSize * 0.95,
                       width: heroSize,
                       height: heroSize,
-                      child: _assetPng(heroAsset!),
+                      child: _assetPng(hero),
                     ),
 
                   // 3) Friend (right side)
-                  if (friendAsset != null && friendAsset!.isNotEmpty)
+                  if (friend.isNotEmpty)
                     Positioned(
                       right: w * 0.06,
                       top: h * 0.50,
                       width: friendSize,
                       height: friendSize,
-                      child: _assetPng(friendAsset!),
+                      child: _assetPng(friend),
                     ),
 
                   // 4) Object (bottom-left corner)
-                  if (objectAsset != null && objectAsset!.isNotEmpty)
+                  if (obj.isNotEmpty)
                     Positioned(
                       left: w * 0.06,
                       bottom: h * 0.06,
                       width: objSize,
                       height: objSize,
-                      child: _assetPng(objectAsset!),
+                      child: _assetPng(obj),
                     ),
-
                   // 5) Emotion bubble (top-left)
                   if (emotionEmoji != null && emotionEmoji!.isNotEmpty)
                     Positioned(
@@ -95,13 +99,17 @@ class AdventureScene extends StatelessWidget {
     );
   }
 
-  Widget _assetPng(String path) {
-    return Image.asset(
-      path,
-      fit: BoxFit.contain,
-      filterQuality: FilterQuality.high,
-    );
-  }
+Widget _assetPng(String path) {
+  return Image.asset(
+    path,
+    fit: BoxFit.contain,
+    filterQuality: FilterQuality.high,
+    errorBuilder: (_, e, __) {
+      debugPrint('AdventureScene asset load error: $path -> $e');
+      return const SizedBox.shrink();
+    },
+  );
+}
 
   Widget _softGradientFallback() {
     return Container(
@@ -109,10 +117,7 @@ class AdventureScene extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFEFE6D8),
-            Color(0xFFF7EFE3),
-          ],
+          colors: [Color(0xFFEFE6D8), Color(0xFFF7EFE3)],
         ),
       ),
     );
@@ -138,10 +143,7 @@ class _EmotionBubble extends StatelessWidget {
           ),
         ],
       ),
-      child: Text(
-        emoji,
-        style: const TextStyle(fontSize: 26, height: 1),
-      ),
+      child: Text(emoji, style: const TextStyle(fontSize: 26, height: 1)),
     );
   }
 }

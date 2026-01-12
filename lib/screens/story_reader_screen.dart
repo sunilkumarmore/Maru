@@ -1,16 +1,15 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:just_audio/just_audio.dart';
+
 import 'package:suzyapp/Services/parent_voice_service.dart';
-import 'package:suzyapp/Services/voice_backend_client.dart';
-import 'package:suzyapp/models/parent_voice_audio.dart';
-import 'package:suzyapp/repositories/parent_voice_audio_repository.dart';
-import 'package:suzyapp/repositories/parent_voice_repository.dart';
-import 'package:suzyapp/repositories/parent_voice_settings_repository.dart';
+import 'package:suzyapp/utils/asset_path.dart';
 
 import '../design_system/app_colors.dart';
 import '../design_system/app_radius.dart';
@@ -28,10 +27,6 @@ class StoryReaderScreen extends StatefulWidget {
   final ProgressRepository progressRepository;
   final String storyId;
   final int? startPageIndex;
-//   final ParentVoiceRepository parentVoiceRepository;
-// final ParentVoiceAudioRepository parentVoiceAudioRepository;
-// final VoiceBackendClient voiceBackendClient;
-// final String uid; // from Firebase Auth
 
   const StoryReaderScreen({
     super.key,
@@ -39,10 +34,6 @@ class StoryReaderScreen extends StatefulWidget {
     required this.progressRepository,
     required this.storyId,
     this.startPageIndex,
-    // required this.parentVoiceRepository,
-    // required this.parentVoiceAudioRepository,
-    // required this.uid,
-    // required this.voiceBackendClient,
   });
 
   @override
@@ -54,10 +45,9 @@ class _StoryReaderScreenState extends State<StoryReaderScreen> {
   Story? _storyCache;
 
   late final ParentVoiceService _parentVoiceService;
-late final FirebaseParentVoiceSettingsRepository _voiceSettingsRepo;
 
-bool _parentVoiceEnabled = false;
-String? _parentVoiceId;
+  bool _parentVoiceEnabled = false;
+  String _parentVoiceId = '';
 
   int _pageIndex = 0;
   bool _completionShown = false;
@@ -67,6 +57,10 @@ String? _parentVoiceId;
   bool _isPlayingAudio = false;
   bool _isSpeakingTts = false;
 
+  // Hardening flags (prevents re-entry + repeated failures)
+  bool _isReadAloudBusy = false;
+  bool _parentVoiceDegraded = false; // once true, skip parent voice for this session
+
   final AudioPlayer _player = AudioPlayer();
   final FlutterTts _tts = FlutterTts();
 
@@ -74,17 +68,14 @@ String? _parentVoiceId;
   void initState() {
     super.initState();
 
-  _pageIndex = widget.startPageIndex ?? 0;
-  _future = widget.storyRepository.getStoryById(widget.storyId);
-  
-  _loadParentVoiceSettings(); // ✅ ADD HERE
-    _parentVoiceService = ParentVoiceService(
-  speakEndpoint: 'https://us-central1-suzyapp.cloudfunctions.net/parentVoiceSpeak',
-);
-_voiceSettingsRepo = FirebaseParentVoiceSettingsRepository();
-
     _pageIndex = widget.startPageIndex ?? 0;
     _future = widget.storyRepository.getStoryById(widget.storyId);
+
+    _parentVoiceService = ParentVoiceService(
+      speakEndpoint: 'https://us-central1-suzyapp.cloudfunctions.net/parentVoiceSpeak',
+    );
+
+    _loadParentVoiceSettings(); // loads toggle + voiceId
 
     // Track audio state
     _player.playerStateStream.listen((state) {
@@ -112,53 +103,41 @@ _voiceSettingsRepo = FirebaseParentVoiceSettingsRepository();
   }
 
   Future<void> _loadParentVoiceSettings() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (kDebugMode) {
+      debugPrint('AUTH user=$user uid=${user?.uid} email=${user?.email}');
+    }
+    if (user == null) return;
 
-  final user = FirebaseAuth.instance.currentUser;
-  debugPrint('AUTH user = $user');
-debugPrint('AUTH uid = ${user?.uid}');
-debugPrint('AUTH email = ${user?.email}');
-  if (user == null) return;
+    final doc = await FirebaseFirestore.instance.doc('users/${user.uid}/settings/audio').get();
 
-  final doc = await FirebaseFirestore.instance
-      .doc('users/${user.uid}/settings/audio')
-      .get();
-  final path = "users/${user.uid}/settings/audio"; 
-  debugPrint('FIRESTORE PATH = $path');
-  debugPrint('RAW parentVoiceEnabled = ${doc.data()?['parentVoiceEnabled']} '
-    'type=${doc.data()?['parentVoiceEnabled']?.runtimeType}');
-debugPrint('RAW elevenVoiceId = ${doc.data()?['elevenVoiceId']}');
+    if (!mounted) return;
 
-  final settingsCollection = FirebaseFirestore.instance
-    .collection('users')
-    .doc(user.uid)
-    .collection('settings');
+    if (!doc.exists) {
+      setState(() {
+        _parentVoiceEnabled = false;
+        _parentVoiceId = '';
+      });
+      return;
+    }
 
-final settingsSnap = await settingsCollection.get();
-debugPrint('SETTINGS COLLECTION DOC COUNT = ${settingsSnap.docs.length}');
-for (final d in settingsSnap.docs) {
-  debugPrint('SETTINGS DOC ID = ${d.id}, DATA = ${d.data()}');
-}
-
-  if (!mounted) return;
-
-  if (!doc.exists) {
+    final data = doc.data()!;
     setState(() {
-      _parentVoiceEnabled = false;
-      _parentVoiceId = null;
-       debugPrint('INSIDE setState: enabled=$_parentVoiceEnabled voiceId=$_parentVoiceId');
+      final enabledRaw = data['parentVoiceEnabled'];
+      _parentVoiceEnabled = enabledRaw is bool
+          ? enabledRaw
+          : (enabledRaw is String ? enabledRaw.toLowerCase().trim() == 'true' : false);
+
+      final voiceRaw = data['elevenVoiceId'];
+      _parentVoiceId = (voiceRaw is String) ? voiceRaw.trim() : '';
     });
-    return;
+
+    if (kDebugMode) {
+      debugPrint(
+        'ParentVoice settings loaded: enabled=$_parentVoiceEnabled voiceId=$_parentVoiceId',
+      );
+    }
   }
-
-  final data = doc.data()!;
-  setState(() {
-    _parentVoiceEnabled = data['parentVoiceEnabled'] == true;
-    _parentVoiceId = data['elevenVoiceId'] as String?;
-  });
-
-
-  }
-
 
   // ---------- Audio helpers ----------
 
@@ -177,81 +156,113 @@ for (final d in settingsSnap.docs) {
     });
   }
 
-  Future<void> _playReadAloud(Story story, StoryPage page) async {
-    await _stopAllAudio();
-
-    // 1) URL first (primary)
-    final url = page.audioUrl;
-    if (url != null && url.trim().isNotEmpty) {
-      try {
-        if (kIsWeb) {
-          await _player.setUrl(url);
-        } else {
-          final file = await DefaultCacheManager().getSingleFile(url);
-          await _player.setFilePath(file.path);
-        }
-        await _player.play();
-        return; // ✅ do not fall through
-      } catch (_) {
-        // fall through to asset/TTS
-      }
-    }
-
-debugPrint('BEFORE ParentAI block: enabled=$_parentVoiceEnabled voiceId=$_parentVoiceId');
-    // 1) page.audioUrl first (already in your code)
-
-// 2) Parent AI voice (server cached/generated)
-debugPrint('🧠 ParentAI: enabled=$_parentVoiceEnabled voiceId=$_parentVoiceId');
-// _parentVoiceEnabled= true;
-// _parentVoiceId="nzFihrBIvB34imQBuxub";
-//hardcoding for test
-if (_parentVoiceEnabled && _parentVoiceId != null && _parentVoiceId!.isNotEmpty) {
-  final generatedUrl = await _parentVoiceService.getOrCreatePageAudioUrl(
-    voiceId: _parentVoiceId!,
-    storyId: story.id,
-    pageIndex: page.index,
-    lang: story.language,
-    text: page.text,
-  );
-debugPrint('🧠 ParentAI: generatedUrl=$generatedUrl');
-  if (generatedUrl != null && generatedUrl.isNotEmpty) {
-    try {
-      if (kIsWeb) {
-        await _player.setUrl(generatedUrl);
-      } else {
-        final file = await DefaultCacheManager().getSingleFile(generatedUrl);
-        await _player.setFilePath(file.path);
-      }
-      await _player.play();
-      return;
-    } catch (e, st) {
-      debugPrint('🧠 ParentAI play error: $e');
-  debugPrint('$st');
-      // fall through to asset/TTS
-    }
-  }
-}
-    // 2) Asset second (offline pack)
-    final asset = page.audioAsset;
-    if (asset != null && asset.trim().isNotEmpty) {
-      try {
-        await _player.setAsset(asset);
-        await _player.play();
-        return; // ✅ do not fall through
-      } catch (_) {
-        // fall through to TTS
-      }
-    }
-
-    // 3) TTS fallback
-    final lang = story.language.toLowerCase();
-    if (lang == 'te') {
-      await _tts.setLanguage('te-IN');
+  Future<void> _playUrl(String url) async {
+    if (kIsWeb) {
+      await _player.setUrl(url);
     } else {
-      await _tts.setLanguage('en-US');
+      final file = await DefaultCacheManager().getSingleFile(url);
+      await _player.setFilePath(file.path);
     }
-    // for mixed in v1, keep en-US
-    await _tts.speak(page.text);
+    await _player.play();
+  }
+
+  String _langForBackend(String storyLang) {
+    final l = storyLang.toLowerCase().trim();
+    if (l == 'te') return 'te';
+    return 'en'; // includes mixed
+  }
+
+  Future<void> _playReadAloud(Story story, StoryPage page) async {
+    // Prevent overlap from rapid taps / page switches
+    if (_isReadAloudBusy) return;
+    _isReadAloudBusy = true;
+
+    try {
+      await _stopAllAudio();
+
+      // 1) URL first (primary)
+      final url = page.audioUrl;
+      if (url != null && url.trim().isNotEmpty) {
+        try {
+          await _playUrl(url.trim());
+          return;
+        } catch (_) {
+          // fall through
+        }
+      }
+
+      // 2) Parent AI voice (server cached/generated) - try once per session; degrade on any failure
+      if (_parentVoiceEnabled && !_parentVoiceDegraded && _parentVoiceId.isNotEmpty) {
+        try {
+          if (kDebugMode) {
+            debugPrint('🧠 ParentAI attempt: enabled=$_parentVoiceEnabled voiceId=$_parentVoiceId');
+          }
+
+          final generatedUrl = await _parentVoiceService.getOrCreatePageAudioUrl(
+            voiceId: _parentVoiceId,
+            storyId: story.id,
+            pageIndex: page.index,
+            lang: _langForBackend(story.language),
+            text: page.text,
+          );
+
+          if (kDebugMode) {
+            debugPrint('🧠 ParentAI generatedUrl=$generatedUrl');
+          }
+
+          if (generatedUrl == null || generatedUrl.trim().isEmpty) {
+            _parentVoiceDegraded = true;
+            if (kDebugMode) debugPrint('🧠 ParentAI degraded: empty url');
+          } else {
+            try {
+              await _playUrl(generatedUrl.trim());
+              return;
+            } catch (e, st) {
+              _parentVoiceDegraded = true;
+              if (kDebugMode) {
+                debugPrint('🧠 ParentAI play error: $e');
+                debugPrint('$st');
+                debugPrint('🧠 ParentAI degraded for this session');
+              }
+            }
+          }
+        } catch (e, st) {
+          _parentVoiceDegraded = true;
+          if (kDebugMode) {
+            debugPrint('🧠 ParentAI call error: $e');
+            debugPrint('$st');
+            debugPrint('🧠 ParentAI degraded for this session');
+          }
+        }
+      }
+
+      // 3) Asset second (offline pack)
+      final asset = AssetPath.normalize(page.audioAsset);
+      if (asset.isNotEmpty) {
+        try {
+          await _player.setAsset(asset);
+          await _player.play();
+          return;
+        } catch (_) {
+          // fall through
+        }
+      }
+
+      // 4) TTS fallback (never crash)
+      try {
+        final lang = story.language.toLowerCase();
+        if (lang == 'te') {
+          await _tts.setLanguage('te-IN');
+        } else {
+          await _tts.setLanguage('en-US');
+        }
+        await _tts.speak(page.text);
+      } catch (_) {
+        // swallow; reading should continue even without audio
+      }
+    } finally {
+      _isReadAloudBusy = false;
+    }
   }
 
   // ---------- Progress helpers ----------
@@ -261,14 +272,18 @@ debugPrint('🧠 ParentAI: generatedUrl=$generatedUrl');
     if (story == null || story.pages.isEmpty) return;
 
     final int clamped = (_pageIndex.clamp(0, story.pages.length - 1) as int);
-
-    await widget.progressRepository.saveProgress(
+  try {
+    await widget.progressRepository.saveReadingProgress(
       ReadingProgress(
         storyId: widget.storyId,
         pageIndex: clamped,
         updatedAt: DateTime.now(),
       ),
     );
+  }
+  catch (e) {
+    if (kDebugMode) debugPrint('saveProgress failed (offline?): $e');
+  }
   }
 
   Future<void> _saveStoryProgress() async {
@@ -277,7 +292,7 @@ debugPrint('🧠 ParentAI: generatedUrl=$generatedUrl');
 
     final int clamped = (_pageIndex.clamp(0, story.pages.length - 1) as int);
     final bool isCompleted = clamped == story.pages.length - 1;
-
+try {
     await widget.progressRepository.saveStoryProgress(
       StoryProgress(
         storyId: widget.storyId,
@@ -286,6 +301,9 @@ debugPrint('🧠 ParentAI: generatedUrl=$generatedUrl');
         lastOpenedAt: DateTime.now(),
       ),
     );
+} catch (e) {
+    if (kDebugMode) debugPrint('saveStoryProgress failed (offline?): $e');
+  }
 
     if (isCompleted && !_completionShown && mounted) {
       _completionShown = true;
@@ -310,8 +328,11 @@ debugPrint('🧠 ParentAI: generatedUrl=$generatedUrl');
 
     setState(() => _pageIndex = newIndex);
 
-    await _saveReadingProgress();
-    await _saveStoryProgress();
+   // await _saveReadingProgress();
+   // await _saveStoryProgress();
+
+    unawaited(_saveReadingProgress());
+unawaited(_saveStoryProgress());
 
     // Auto read if enabled
     if (_readAloudEnabled) {
@@ -345,34 +366,6 @@ debugPrint('🧠 ParentAI: generatedUrl=$generatedUrl');
     if (len <= shortMax) return 6;
     if (len <= mediumMax) return 5;
     return 4;
-  }
-
-  // Basic mapping from existing StoryPage fields (imageAsset/imageUrl) to scene.
-  // If you later add heroAsset/backgroundAsset/etc to StoryPage, wire them here.
-  Widget _buildSceneOrImage(StoryPage page) {
-    // If you only have a single illustration per page, use it as background.
-    // For generated adventures, you’ll supply background/hero/friend/object/emotion.
-    final bg = page.imageAsset;
-
-    if (bg != null && bg.isNotEmpty) {
-      return AdventureScene(
-        backgroundAsset: bg,
-        // heroAsset/friendAsset/objectAsset/emotionEmoji can be added later
-        emotionEmoji: null,
-      );
-    }
-
-    final url = page.imageUrl;
-    if (url != null && url.isNotEmpty) {
-      // AdventureScene expects assets; if you want network backgrounds later, we can extend it.
-      // For now, fallback to Image.network.
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.large),
-        child: Image.network(url, fit: BoxFit.cover),
-      );
-    }
-
-    return const Center(child: Icon(Icons.image, size: 56));
   }
 
   // ---------- UI ----------
@@ -444,13 +437,13 @@ debugPrint('🧠 ParentAI: generatedUrl=$generatedUrl');
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(AppRadius.large),
                     ),
-                  child: AdventureScene(
-  backgroundAsset: page.backgroundAsset ?? page.imageAsset,
-  heroAsset: page.heroAsset,
-  friendAsset: page.friendAsset,
-  objectAsset: page.objectAsset,
-  emotionEmoji: page.emotionEmoji,
-),
+                    child: AdventureScene(
+                      backgroundAsset: AssetPath.normalize(page.backgroundAsset ?? page.imageAsset),
+                      heroAsset: AssetPath.normalize(page.heroAsset),
+                      friendAsset: AssetPath.normalize(page.friendAsset),
+                      objectAsset: AssetPath.normalize(page.objectAsset),
+                      emotionEmoji: page.emotionEmoji,
+                    ),
                   ),
                 ),
 
@@ -510,9 +503,7 @@ debugPrint('🧠 ParentAI: generatedUrl=$generatedUrl');
                       ),
                     ),
                     IconButton(
-                      onPressed: _pageIndex < story.pages.length - 1
-                          ? () => _setPage(_pageIndex + 1)
-                          : null,
+                      onPressed: _pageIndex < story.pages.length - 1 ? () => _setPage(_pageIndex + 1) : null,
                       icon: const Icon(Icons.chevron_right),
                     ),
                   ],
