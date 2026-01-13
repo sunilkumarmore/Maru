@@ -7,39 +7,39 @@
   "pages": [
     {
       "text": "This is Leo the lion.\nLeo is kind.\nLeo is quiet.",
-      "imageAsset": "assets/images/shy_lion_01_intro.png"
+      "imageAsset": "images/shy_lion_roar/shy_lion_01_intro.png"
     },
     {
       "text": "Leo has good ideas.\nBut Leo feels shy.\nHe does not like to talk.",
-      "imageAsset": "assets/images/shy_lion_02_shy.png"
+      "imageAsset": "images/shy_lion_roar/shy_lion_02_classroom.png"
     },
     {
       "text": "At jungle school, Leo plays with friends.\nMonkey, Elephant, and Bunny play a game.\nThey use color stones to start.",
-      "imageAsset": "assets/images/shy_lion_03_game_setup.png"
+      "imageAsset": "images/shy_lion_roar/shy_lion_03_problem.png"
     },
     {
       "text": "Monkey grabs the red stone.\nBunny grabs the yellow stone.\n\"I go first!\"\n\"No, I go first!\"",
-      "imageAsset": "assets/images/shy_lion_04_conflict.png"
+      "imageAsset": "images/shy_lion_roar/shy_lion_03_problem.png"
     },
     {
       "text": "The friends pull the stones.\nThe game stops.\nElephant looks worried.\nNo one plays.",
-      "imageAsset": "assets/images/shy_lion_05_problem.png"
+      "imageAsset": "images/shy_lion_roar/shy_lion_03_problem.png"
     },
     {
       "text": "Leo knows the rule.\nHe knows which stone goes first.\nBut Leo feels shy.",
-      "imageAsset": "assets/images/shy_lion_06_thinking.png"
+      "imageAsset": "images/shy_lion_roar/shy_lion_04_thinking.png"
     },
     {
       "text": "Leo takes a deep breath.\n\"The red stone goes first,\" he says.",
-      "imageAsset": "assets/images/shy_lion_07_speaking.png"
+      "imageAsset": "images/shy_lion_roar/shy_lion_05_speaking.png"
     },
     {
       "text": "Monkey puts the red stone on the ground.\nBunny steps back.\nThe game starts at the stone.",
-      "imageAsset": "assets/images/shy_lion_08_resolution.png"
+      "imageAsset": "images/shy_lion_roar/shy_lion_06_solution.png"
     },
     {
       "text": "Leo feels proud.\nHe did not roar.\nHe used his voice.",
-      "imageAsset": "assets/images/shy_lion_09_lesson.png"
+      "imageAsset": "images/shy_lion_roar/shy_lion_07_lesson.png"
     }
   ],
   "completedMessage": "🦁 You don’t have to roar loud to be brave. Your voice matters."

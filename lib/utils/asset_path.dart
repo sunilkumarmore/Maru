@@ -1,20 +1,26 @@
 class AssetPath {
-  static String normalize(String? input) {
-    if (input == null) return '';
-    var s = input.trim();
-    if (s.isEmpty) return s;
+  static String normalize(String? raw) {
+    if (raw == null) return '';
+    var p = raw.trim();
+    if (p.isEmpty) return '';
 
-    // Remove accidental leading "./"
-    if (s.startsWith('./')) s = s.substring(2);
+    // Convert backslashes (Windows) to forward slashes
+    p = p.replaceAll('\\', '/');
 
-    // Fix repeated prefix: assets/assets/...
-    while (s.startsWith('assets/assets/')) {
-      s = s.replaceFirst('assets/', '');
+    // If someone accidentally stored "assets/assets/..", collapse to "assets/.."
+    while (p.startsWith('assets/assets/')) {
+      p = p.replaceFirst('assets/assets/', 'assets/');
     }
 
-    // Fix leading slash variants: "/assets/..."
-    if (s.startsWith('/assets/')) s = s.substring(1);
+    // Some JSON might start with "/assets/..." or "./assets/..."
+    if (p.startsWith('/')) p = p.substring(1);
+    if (p.startsWith('./')) p = p.substring(2);
 
-    return s;
+    // Ensure it starts with "assets/"
+    if (!p.startsWith('assets/')) {
+      p = 'assets/$p';
+    }
+
+    return p;
   }
 }

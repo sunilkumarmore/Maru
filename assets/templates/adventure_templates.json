@@ -7,29 +7,29 @@
       "slots": ["hero", "place", "friend", "object", "feeling"],
       "choices": {
         "hero": [
-          { "id": "bear", "label": "Bear", "emoji": "🐻" },
-          { "id": "lion", "label": "Lion", "emoji": "🦁" },
-          { "id": "bunny", "label": "Bunny", "emoji": "🐰" }
+          { "id": "bear", "label": "Bear", "emoji": "🐻" , "imageAsset": "images/adventure/hero_bear.png" },
+          { "id": "lion", "label": "Lion", "emoji": "🦁" , "imageAsset": "images/adventure/hero_lion.png" },
+          { "id": "bunny", "label": "Bunny", "emoji": "🐰" , "imageAsset": "images/adventure/hero_bunny.png" }
         ],
         "place": [
-          { "id": "park", "label": "Park", "emoji": "🏞️" },
-          { "id": "beach", "label": "Beach", "emoji": "🏖️" },
-          { "id": "home", "label": "Home", "emoji": "🏠" }
+          { "id": "park", "label": "Park", "emoji": "🏞️" , "imageAsset": "images/adventure/place_park.png" },
+          { "id": "beach", "label": "Beach", "emoji": "🏖️" , "imageAsset": "images/adventure/place_beach.png" },
+          { "id": "home", "label": "Home", "emoji": "🏠" , "imageAsset": "images/adventure/place_home.png" }
         ],
         "friend": [
-          { "id": "turtle", "label": "Turtle", "emoji": "🐢" },
-          { "id": "duck", "label": "Duck", "emoji": "🦆" },
-          { "id": "cat", "label": "Cat", "emoji": "🐱" }
+          { "id": "turtle", "label": "Turtle", "emoji": "🐢" , "imageAsset": "images/adventure/friend_turtle.png" },
+          { "id": "duck", "label": "Duck", "emoji": "🦆" , "imageAsset": "images/adventure/friend_duck.png" },
+          { "id": "cat", "label": "Cat", "emoji": "🐱" , "imageAsset": "images/adventure/friend_cat.png" }
         ],
         "object": [
-          { "id": "ball", "label": "Ball", "emoji": "⚽" },
-          { "id": "star", "label": "Star", "emoji": "⭐" },
-          { "id": "hat", "label": "Hat", "emoji": "🎩" }
+          { "id": "ball", "label": "Ball", "emoji": "⚽" , "imageAsset": "images/adventure/object_ball.png" },
+          { "id": "star", "label": "Star", "emoji": "⭐" , "imageAsset": "images/adventure/object_star.png" },
+          { "id": "hat", "label": "Hat", "emoji": "🎩" , "imageAsset": "images/adventure/object_hat.png" }
         ],
         "feeling": [
-          { "id": "happy", "label": "Happy", "emoji": "😊" },
-          { "id": "brave", "label": "Brave", "emoji": "💪" },
-          { "id": "proud", "label": "Proud", "emoji": "🌟" }
+          { "id": "happy", "label": "Happy", "emoji": "😊" , "imageAsset": "images/adventure/feeling_happy.png" },
+          { "id": "brave", "label": "Brave", "emoji": "💪" , "imageAsset": "images/adventure/feeling_brave.png" },
+          { "id": "proud", "label": "Proud", "emoji": "🌟" , "imageAsset": "images/adventure/feeling_proud.png" }
         ]
       },
       "pages": [

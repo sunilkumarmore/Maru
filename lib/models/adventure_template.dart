@@ -63,18 +63,21 @@ class AdventureChoice {
   final String id;
   final String label;
   final String emoji;
+  final String? imageAsset;
 
   AdventureChoice({
     required this.id,
     required this.label,
     required this.emoji,
+    this.imageAsset,
   });
 
   factory AdventureChoice.fromJson(Map<String, dynamic> json) {
     return AdventureChoice(
       id: json['id'] as String,
       label: json['label'] as String? ?? '',
-      emoji: json['emoji'] as String? ?? '✨',
+      emoji: json['emoji'] as String? ?? '?o"',
+      imageAsset: json['imageAsset'] as String?,
     );
   }
 }

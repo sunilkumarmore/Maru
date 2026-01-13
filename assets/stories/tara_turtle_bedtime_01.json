@@ -7,42 +7,42 @@
   "pages": [
     {
       "text": "The sky turns pink… then deep blue spreads!\nTara the Turtle rubs her head.\n\"Yaaawn,\" she says, \"I’m feeling slow...\"\nI think it's bedtime — time to go!",
-      "imageAsset": "assets/images/tara_01_sky_changes.png",
+      "imageAsset": "images/tara_01_sky_changes.png",
       "audioAsset": "audio/tara/Tara1.mp3"
     },
     {
       "text": "Clouds go floating, soft and high…\nThe sleepy sun waves one last “Bye!”\nTara blinks, then gives a yawn,\nHer tiny shell sways with a fawn.",
-      "imageAsset": "assets/images/tara_02_yawn_window.png",
+      "imageAsset": "images/tara_02_yawn_window.png",
       "audioAsset": "audio/tara/Tara2.mp3"
     },
     {
       "text": "Brush-brush-brush those tiny teeth!\nBack and front and underneath!\nSlow and steady, not too fast,\nTara taps her toes at last!",
-      "imageAsset": "assets/images/tara_03_brush_teeth.png",
+      "imageAsset": "images/tara_03_brush_teeth.png",
       "audioAsset": "audio/tara/Tara3.mp3"
     },
     {
       "text": "Pajamas on! They’re soft and snug,\nShe twirls, then stops for a bedtime hug.\nHer turtle heart feels warm and tight,\n\"Goodnight,\" she whispers. \"Sleepy night!\"",
-      "imageAsset": "assets/images/tara_04_pajamas_hug.png",
+      "imageAsset": "images/tara_04_pajamas_hug.png",
       "audioAsset": "audio/tara/Tara4.mp3"
     },
     {
       "text": "The lamp glows low — a golden shine,\nThe cozy room feels just fine.\nWalls don’t talk, but if they could,\nThey’d say, “Sleep well, sweet turtlehood!”",
-      "imageAsset": "assets/images/tara_05_lamp_room.png",
+      "imageAsset": "images/tara_05_lamp_room.png",
       "audioAsset": "audio/tara/Tara5.mp3"
     },
     {
       "text": "Flip goes the book, a gentle sound…\nThe words go slow, the tales go 'round.\nEach sleepy story whispers light,\nHelping Tara dream just right.",
-      "imageAsset": "assets/images/tara_06_story_time.png",
+      "imageAsset": "images/tara_06_story_time.png",
       "audioAsset": "audio/tara/Tara6.mp3"
     },
     {
       "text": "Peek! The moon is in the sky,\nWatching gently from up high.\nStars all giggle, blink, and glow…\nThey see Tara — and they know!",
-      "imageAsset": "assets/images/tara_07_moon_window.png",
+      "imageAsset": "images/tara_07_moon_window.png",
       "audioAsset": "audio/tara/Tara7.mp3"
     },
     {
       "text": "Shell curls in, her breathing deep,\nEyes are shut, she's fast asleep.\nSnug and happy, calm and bright,\nTara dreams through all the night.",
-      "imageAsset": "assets/images/tara_08_sleeping.png",
+      "imageAsset": "images/tara_08_sleeping.png",
       "audioAsset": "audio/tara/Tara8.mp3"
     }
   ],

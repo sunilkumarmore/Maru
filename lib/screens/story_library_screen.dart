@@ -58,7 +58,10 @@ class _StoryLibraryScreenState extends State<StoryLibraryScreen> {
   }
 
   void _refresh() {
-    setState(() => _future = _load());
+    // setState callbacks must be void; use a block to avoid returning the Future
+    setState(() {
+      _future = _load();
+    });
   }
 
   int _columnsForWidth(double w) {
@@ -139,7 +142,7 @@ class _StoryLibraryScreenState extends State<StoryLibraryScreen> {
                       crossAxisCount: cols,
                       crossAxisSpacing: AppSpacing.medium,
                       mainAxisSpacing: AppSpacing.medium,
-                      childAspectRatio: 0.78,
+                      childAspectRatio: 1.2,
                     ),
                     itemBuilder: (context, i) {
                       final s = stories[i];
@@ -360,90 +363,97 @@ class _StoryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top: cover area (fixed height), always clipped
-            Container(
-              height: 120,
-              decoration: BoxDecoration(
-                color: accent.withOpacity(0.18),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(AppRadius.large),
-                  topRight: Radius.circular(AppRadius.large),
-                ),
-              ),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (cover.isNotEmpty)
-                    ClipRRect(
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(AppRadius.large),
-                        topRight: Radius.circular(AppRadius.large),
-                      ),
-                      child: Image.asset(
-                        cover,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, e, __) {
-                          debugPrint('Cover load error for ${story.id}: $e');
-                          return Center(
-                            child: Icon(Icons.image_not_supported, size: 48, color: accent),
-                          );
-                        },
-                      ),
-                    )
-                  else
-                    Center(child: Icon(Icons.image, size: 48, color: accent)),
-
-                  // subtle overlay so the badge pops on bright covers
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(AppRadius.large),
-                        topRight: Radius.circular(AppRadius.large),
-                      ),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withOpacity(0.22),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
+            // Top: cover area (dominant, keeps layout proportional)
+            Expanded(
+              flex: 7,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(0.18),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(AppRadius.large),
+                    topRight: Radius.circular(AppRadius.large),
                   ),
+                ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (cover.isNotEmpty)
+                      ClipRRect(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(AppRadius.large),
+                          topRight: Radius.circular(AppRadius.large),
+                        ),
+                        child: Image.asset(
+                          cover,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, e, __) {
+                            debugPrint('Cover load error for ${story.id}: $e');
+                            return Center(
+                              child: Icon(Icons.image_not_supported, size: 48, color: accent),
+                            );
+                          },
+                        ),
+                      )
+                    else
+                      Center(child: Icon(Icons.image, size: 48, color: accent)),
 
-                  if (inProgress)
-                    Positioned(
-                      top: 10,
-                      left: 10,
-                      child: _Badge(text: 'Continue', color: AppColors.accentCoral),
+                    // subtle overlay so the badge pops on bright covers
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(AppRadius.large),
+                          topRight: Radius.circular(AppRadius.large),
+                        ),
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.22),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
                     ),
-                ],
+
+                    if (inProgress)
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        child: _Badge(text: 'Continue', color: AppColors.accentCoral),
+                      ),
+                  ],
+                ),
               ),
             ),
 
-            // Bottom: make it flexible to prevent overflow in grid cells
-            Flexible(
-  fit: FlexFit.loose,
+            // Bottom: compact metadata area
+            Expanded(
+              flex: 3,
               child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.medium),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.small,
+                  AppSpacing.xsmall,
+                  AppSpacing.small,
+                  AppSpacing.small,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       story.title,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
-                        height: 1.2,
+                        height: 1.1,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.small),
+                    const SizedBox(height: AppSpacing.xsmall),
                     Wrap(
-                      spacing: AppSpacing.small,
-                      runSpacing: AppSpacing.small,
+                      spacing: AppSpacing.xsmall,
+                      runSpacing: AppSpacing.xsmall,
                       children: [
                         _Badge(text: story.ageBand, color: accent),
                         _Badge(
@@ -474,14 +484,14 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: fill ?? color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         text,
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: color),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color),
       ),
     );
   }

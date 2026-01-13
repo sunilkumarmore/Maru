@@ -27,7 +27,7 @@ class AdventureScene extends StatelessWidget {
     final obj = AssetPath.normalize(objectAsset);
     return AspectRatio(
       // keeps scene proportions stable across devices
-      aspectRatio: 16 / 10,
+      aspectRatio: 4 / 3,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.large),
         child: Container(
@@ -47,7 +47,11 @@ class AdventureScene extends StatelessWidget {
                 children: [
                   // 1) Background
                   if (bg.isNotEmpty)
-                    Image.asset(bg, fit: BoxFit.cover)
+                    Image.asset(
+                      bg,
+                      fit: BoxFit.contain,
+                      alignment: Alignment.center,
+                    )
                   else
                     _softGradientFallback(),
 

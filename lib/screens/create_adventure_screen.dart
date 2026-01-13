@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:suzyapp/models/adventure_template.dart';
+import 'package:suzyapp/utils/asset_path.dart';
 import '../design_system/app_colors.dart';
 import '../design_system/app_radius.dart';
 import '../design_system/app_spacing.dart';
@@ -179,12 +180,22 @@ class _CreateAdventureScreenState extends State<CreateAdventureScreen> {
                       crossAxisCount: 2,
                       mainAxisSpacing: AppSpacing.medium,
                       crossAxisSpacing: AppSpacing.medium,
-                      childAspectRatio: 1.3,
+                      childAspectRatio: 1.0,
                     ),
                     itemCount: options.length,
                     itemBuilder: (context, i) {
                       final c = options[i];
                       final selected = _selected[currentSlot]?.id == c.id;
+                      final imageAsset = AssetPath.normalize(c.imageAsset);
+                      final choiceVisual = imageAsset.isNotEmpty
+                          ? Image.asset(
+                              imageAsset,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) {
+                                return Text(c.emoji, style: const TextStyle(fontSize: 42));
+                              },
+                            )
+                          : Text(c.emoji, style: const TextStyle(fontSize: 42));
 
                       return InkWell(
                         borderRadius: BorderRadius.circular(AppRadius.large),
@@ -201,7 +212,7 @@ class _CreateAdventureScreenState extends State<CreateAdventureScreen> {
                           }
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(AppSpacing.large),
+                          padding: const EdgeInsets.all(AppSpacing.medium),
                           decoration: BoxDecoration(
                             color: selected ? AppColors.surface : AppColors.surface,
                             borderRadius: BorderRadius.circular(AppRadius.large),
@@ -213,7 +224,21 @@ class _CreateAdventureScreenState extends State<CreateAdventureScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(c.emoji, style: const TextStyle(fontSize: 42)),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(AppSpacing.medium),
+                                  child: SizedBox(
+                                    width: double.infinity,
+                                    child: AspectRatio(
+                                      aspectRatio: 1,
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(AppRadius.large - 4),
+                                        child: choiceVisual,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                               const SizedBox(height: AppSpacing.small),
                               Text(
                                 c.label,

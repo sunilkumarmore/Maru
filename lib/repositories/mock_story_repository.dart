@@ -43,15 +43,34 @@ Story _toDomain(StoryDto d) {
     final q = query.searchText.trim().toLowerCase();
     final qLang = query.language?.trim().toLowerCase();
     final qAge = query.ageBand?.trim().toLowerCase();
+    String norm(String s) => s.trim().toLowerCase();
+String normAge(String s) => norm(s).replaceAll('–', '-'); // en-dash → hyphen
+
 
     return stories.where((s) {
-      final t = s.title.toLowerCase();
-      final l = s.language.toLowerCase();
-      final a = s.ageBand.toLowerCase();
-      return (q.isEmpty || t.contains(q)) &&
-             (qLang == null || l == qLang) &&
-             (qAge == null || a == qAge);
-    }).toList();
+   final title = norm(s.title);
+  final id = norm(s.id);
+  final lang = norm(s.language);
+  final age = normAge(s.ageBand);
+
+  // Query
+  final queryText = norm(q); // q is your searchText already trimmed, ok if empty
+
+  // Search: title OR id (much more usable)
+  final matchesSearch =
+      queryText.isEmpty || title.contains(queryText) || id.contains(queryText);
+
+  // Language: normalize query too
+  final matchesLang =
+      qLang == null || qLang.trim().isEmpty || lang == norm(qLang);
+
+  // Age: normalize query too (handles 4–5 vs 4-5)
+  final matchesAge =
+      qAge == null || qAge.trim().isEmpty || age == normAge(qAge);
+
+  return matchesSearch && matchesLang && matchesAge;
+}).toList();
+    
   }
 
   @override
