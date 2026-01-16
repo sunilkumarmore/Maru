@@ -19,7 +19,6 @@ class ParentSummaryScreen extends StatefulWidget {
 
 class _ParentSummaryScreenState extends State<ParentSummaryScreen> {
   late Future<_ParentSummaryVM> _future;
-
   @override
   void initState() {
     super.initState();
@@ -72,6 +71,73 @@ class _ParentSummaryScreenState extends State<ParentSummaryScreen> {
     return '$y-$m-$d  $hh:$mm';
   }
 
+  Widget _buildParentVoiceCard(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.large),
+          onTap: () => Navigator.pushNamed(context, '/parent-voice'),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.large),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.large),
+              border: Border.all(color: AppColors.outline),
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.shadow,
+                  blurRadius: 18,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: AppColors.tileBlue,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.record_voice_over,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.medium),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Use Parent Voice',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: AppSpacing.xsmall),
+                      Text(
+                        'Let your child hear you during stories.',
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          top: -10,
+          right: 14,
+          child: _NewBadge(),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,6 +163,8 @@ class _ParentSummaryScreenState extends State<ParentSummaryScreen> {
 
             return ListView(
               children: [
+                _buildParentVoiceCard(context),
+                const SizedBox(height: AppSpacing.large),
                 _Card(
                   title: 'Stories Completed',
                   value: vm.completed.toString(),
@@ -115,11 +183,6 @@ class _ParentSummaryScreenState extends State<ParentSummaryScreen> {
                   subtitle: 'Most recent reading activity',
                 ),
                
-OutlinedButton(
-  onPressed: () => Navigator.pushNamed(context, '/privacy'),
-  child: const Text('Privacy Policy'),
-),
-
                 const SizedBox(height: AppSpacing.medium),
                 _Card(
                   title: 'Stories Touched',
@@ -128,18 +191,14 @@ OutlinedButton(
                 ),
                 const SizedBox(height: AppSpacing.large),
 
-                OutlinedButton(
-                 onPressed: () {
-  Navigator.pushNamed(context, '/parent-voice');
-},
-                  child: const Text('Parent Voice Settings'),
-                ),
-
-                const SizedBox(height: AppSpacing.large),
-
                 Text(
                   'Note: This is a lightweight v1 summary. No personal data is collected.',
                   style: TextStyle(color: AppColors.textSecondary.withOpacity(0.9)),
+                ),
+                const SizedBox(height: AppSpacing.large),
+                OutlinedButton(
+                  onPressed: () => Navigator.pushNamed(context, '/privacy'),
+                  child: const Text('Privacy Policy'),
                 ),
               ],
             );
@@ -208,6 +267,62 @@ class _Card extends StatelessWidget {
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _NewBadge extends StatefulWidget {
+  const _NewBadge();
+
+  @override
+  State<_NewBadge> createState() => _NewBadgeState();
+}
+
+class _NewBadgeState extends State<_NewBadge> {
+  bool _pulsed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _pulsed = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: AnimatedScale(
+        scale: _pulsed ? 1.05 : 0.95,
+        duration: const Duration(milliseconds: 900),
+        curve: Curves.easeInOut,
+        onEnd: () {
+          if (mounted) setState(() => _pulsed = !_pulsed);
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.choiceRed,
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.shadow,
+                blurRadius: 10,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: const Text(
+            'NEW',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.6,
+            ),
+          ),
+        ),
       ),
     );
   }

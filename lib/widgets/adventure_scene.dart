@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:suzyapp/utils/asset_path.dart';
 import '../design_system/app_radius.dart';
@@ -47,7 +48,7 @@ class AdventureScene extends StatelessWidget {
                 children: [
                   // 1) Background
                   if (bg.isNotEmpty)
-                    Image.asset(
+                    _imageWidget(
                       bg,
                       fit: BoxFit.contain,
                       alignment: Alignment.center,
@@ -65,7 +66,7 @@ class AdventureScene extends StatelessWidget {
                       top: h - heroSize * 0.95,
                       width: heroSize,
                       height: heroSize,
-                      child: _assetPng(hero),
+                      child: _imageWidget(hero, fit: BoxFit.contain),
                     ),
 
                   // 3) Friend (right side)
@@ -75,7 +76,7 @@ class AdventureScene extends StatelessWidget {
                       top: h * 0.50,
                       width: friendSize,
                       height: friendSize,
-                      child: _assetPng(friend),
+                      child: _imageWidget(friend, fit: BoxFit.contain),
                     ),
 
                   // 4) Object (bottom-left corner)
@@ -85,7 +86,7 @@ class AdventureScene extends StatelessWidget {
                       bottom: h * 0.06,
                       width: objSize,
                       height: objSize,
-                      child: _assetPng(obj),
+                      child: _imageWidget(obj, fit: BoxFit.contain),
                     ),
                   // 5) Emotion bubble (top-left)
                   if (emotionEmoji != null && emotionEmoji!.isNotEmpty)
@@ -103,15 +104,35 @@ class AdventureScene extends StatelessWidget {
     );
   }
 
-Widget _assetPng(String path) {
+Widget _imageWidget(String path, {required BoxFit fit, Alignment alignment = Alignment.center}) {
+  if (AssetPath.isRemote(path)) {
+    return CachedNetworkImage(
+      imageUrl: path,
+      fit: fit,
+      alignment: alignment,
+      fadeInDuration: const Duration(milliseconds: 200),
+      placeholder: (_, __) => _placeholderImage(),
+      errorWidget: (_, e, __) {
+        debugPrint('AdventureScene network load error: $path -> $e');
+        return _placeholderImage();
+      },
+    );
+  }
   return Image.asset(
     path,
-    fit: BoxFit.contain,
+    fit: fit,
+    alignment: alignment,
     filterQuality: FilterQuality.high,
     errorBuilder: (_, e, __) {
       debugPrint('AdventureScene asset load error: $path -> $e');
       return const SizedBox.shrink();
     },
+  );
+}
+
+Widget _placeholderImage() {
+  return const Center(
+    child: Icon(Icons.image_not_supported, color: Colors.black26, size: 36),
   );
 }
 

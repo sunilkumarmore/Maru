@@ -32,6 +32,7 @@ class ParentVoiceSettingsRepository {
     // Default values we want to guarantee exist (and with correct types).
     bool parentVoiceEnabled = false;
     String elevenVoiceId = '';
+    Map<String, dynamic> elevenlabsSettings = ParentVoiceSettings.defaults().elevenlabsSettings;
 
     if (snap.exists) {
       final data = snap.data() ?? {};
@@ -50,6 +51,11 @@ class ParentVoiceSettingsRepository {
       if (rawVoiceId is String) {
         elevenVoiceId = rawVoiceId;
       }
+
+      final rawSettings = data['elevenlabsSettings'];
+      if (rawSettings is Map) {
+        elevenlabsSettings = Map<String, dynamic>.from(rawSettings);
+      }
     }
 
 
@@ -63,6 +69,7 @@ class ParentVoiceSettingsRepository {
       {
         'parentVoiceEnabled': parentVoiceEnabled, // MUST be boolean
         'elevenVoiceId': elevenVoiceId,
+        'elevenlabsSettings': elevenlabsSettings,
         'updatedAt': FieldValue.serverTimestamp(),
       },
       SetOptions(merge: true),
@@ -95,10 +102,15 @@ Stream<ParentVoiceSettings> watchSettings() {
             : false);
 
     final voiceId = (data['elevenVoiceId'] is String) ? data['elevenVoiceId'] as String : '';
+    final rawSettings = data['elevenlabsSettings'];
+    final settings = rawSettings is Map
+        ? Map<String, dynamic>.from(rawSettings)
+        : ParentVoiceSettings.defaults().elevenlabsSettings;
 
     return ParentVoiceSettings(
       parentVoiceEnabled: enabled,
       elevenVoiceId: voiceId,
+      elevenlabsSettings: settings,
     );
   });
 }
@@ -119,6 +131,7 @@ Future<void> saveSettings(ParentVoiceSettings settings) async {
     {
       'parentVoiceEnabled': settings.parentVoiceEnabled, // ✅ bool
       'elevenVoiceId': settings.elevenVoiceId,
+      'elevenlabsSettings': settings.elevenlabsSettings,
       'updatedAt': FieldValue.serverTimestamp(),
     },
     SetOptions(merge: true),

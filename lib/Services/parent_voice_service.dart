@@ -1,49 +1,108 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class ParentVoiceService {
-  final String speakEndpoint;
+  final String? createEndpoint;
+  final String? generateEndpoint;
 
-  
+  ParentVoiceService({
+    this.createEndpoint,
+    this.generateEndpoint,
+  });
 
-  ParentVoiceService({required this.speakEndpoint});
-
-  Future<String?> getOrCreatePageAudioUrl({
-    required String voiceId,
-    required String storyId,
-    required int pageIndex,
-    required String lang,
-    required String text,
+  Future<String?> createVoiceFromSample({
+    required Uint8List audioBytes,
+    required String mimeType,
+    String name = 'Parent Voice',
   }) async {
+    if (createEndpoint == null || createEndpoint!.isEmpty) return null;
+
     final user = FirebaseAuth.instance.currentUser;
     final token = await user?.getIdToken();
     if (user == null) return null;
-
-   // final token = await user.getIdToken();
+    debugPrint('ParentVoice create: bytes=${audioBytes.length} mime=$mimeType name=$name');
 
     final resp = await http.post(
-      Uri.parse(speakEndpoint),
+      Uri.parse(createEndpoint!),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
-        'voiceId': voiceId,
-        'storyId': storyId,
-        'pageIndex': pageIndex,
-        'lang': lang,
-        'text': text,
+        'audioBase64': base64Encode(audioBytes),
+        'mimeType': mimeType,
+        'name': name,
       }),
     );
 
-      debugPrint('🌐 parentVoiceSpeak status=${resp.statusCode}');
-      debugPrint('🌐 parentVoiceSpeak body=${resp.body}');
+    debugPrint('ParentVoice create status=${resp.statusCode}');
+    debugPrint('ParentVoice create body=${resp.body}');
     if (resp.statusCode != 200) return null;
     final data = jsonDecode(resp.body) as Map<String, dynamic>;
-    debugPrint('🌐 parsed keys=${(data as Map).keys.toList()}');
-    debugPrint('🌐 parsed audioUrl=${data['audioUrl']}');
+    debugPrint('ParentVoice create parsed voiceId=${data['voiceId']}');
+    return data['voiceId'] as String?;
+  }
+
+  Future<String?> generateNarration({
+    required String voiceId,
+    required String storyId,
+    required int pageIndex,
+    required String lang,
+    required String text,
+    Map<String, dynamic>? elevenlabsSettings,
+  }) async {
+    if (generateEndpoint == null || generateEndpoint!.isEmpty) return null;
+
+    final user = FirebaseAuth.instance.currentUser;
+    final token = await user?.getIdToken();
+    if (user == null) return null;
+
+    final payload = <String, dynamic>{
+      'voiceId': voiceId,
+      'storyId': storyId,
+      'pageIndex': pageIndex,
+      'lang': lang,
+      'text': text,
+    };
+    _applyElevenlabsSettings(payload, elevenlabsSettings);
+
+    final resp = await http.post(
+      Uri.parse(generateEndpoint!),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(payload),
+    );
+
+    if (resp.statusCode != 200) return null;
+    final data = jsonDecode(resp.body) as Map<String, dynamic>;
     return data['audioUrl'] as String?;
   }
+}
+
+void _applyElevenlabsSettings(
+  Map<String, dynamic> payload,
+  Map<String, dynamic>? settings,
+) {
+  if (settings == null) return;
+
+  void addNum(String key) {
+    final v = settings[key];
+    if (v is num) payload[key] = v;
+  }
+
+  void addBool(String key) {
+    final v = settings[key];
+    if (v is bool) payload[key] = v;
+  }
+
+  addNum('stability');
+  addNum('similarity_boost');
+  addNum('style');
+  addBool('use_speaker_boost');
+  addNum('speed');
 }

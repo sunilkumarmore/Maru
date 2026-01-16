@@ -8,43 +8,43 @@
   "pages": [
     {
       "text": "Wiggle-waggle go Oliver’s toes,\nSomething’s bubbling… but nobody knows!\n“Wuh-oh!” says Bear with a silly face —\nIs something rumbling in his tummy place?",
-      "imageAsset": "images/oliver_01_wiggle.png",
-      "audioAsset": "assets/audio/oliver/page_01.mp3"
+      "imageAsset": "images/oliver_01_wiggle.png"
+      
     },
     {
       "text": "He spins and wiggles, round and round,\nGurgle-gurgle goes a funny sound!\nOliver stops. He taps his belly.\n\"Is there jelly in my belly?\"",
-      "imageAsset": "images/oliver_02_uh_oh.png",
-      "audioAsset": "assets/audio/oliver/page_02.mp3"
+      "imageAsset": "images/oliver_02_uh_oh.png"
+      
     },
     {
       "text": "\"Uh-oh,\" says his tummy again,\nOliver thinks… then counts to ten.\nHe looks left, he looks right…\n\"Time to find my pot — hold on tight!\"",
-      "imageAsset": "images/oliver_03_walk_to_potty.png",
-      "audioAsset": "assets/audio/oliver/page_03.mp3"
+      "imageAsset": "images/oliver_03_walk_to_potty.png"
+      
     },
     {
       "text": "Tip-tap-tippy-toes, just like that,\nOliver walks with his potty hat!\nHe plops down slow, sits just so,\n\"Here I go! Nice and low!\"",
-      "imageAsset": "images/oliver_04_sitting.png",
-      "audioAsset": "assets/audio/oliver/page_04.mp3"
+      "imageAsset": "images/oliver_04_sitting.png"
+      
     },
     {
       "text": "Shhh… it’s quiet, not a peep,\nOliver’s still — not even a beep!\nHe takes a breath, soft and deep…\n\"I can do it!\" he whispers. \"I’m not asleep!\"",
-      "imageAsset": "images/oliver_05_waiting.png",
-      "audioAsset": "assets/audio/oliver/page_05.mp3"
+      "imageAsset": "images/oliver_05_waiting.png"
+      
     },
     {
       "text": "DRIP DROP! PLOP PLOP!\nOliver’s eyes go pop-pop-pop!\n“I did it!” he squeaks, proud and bright,\nHis tiny bear heart feels just right!",
-      "imageAsset": "images/oliver_06_success.png",
-      "audioAsset": "assets/audio/oliver/page_06.mp3"
+      "imageAsset": "images/oliver_06_success.png"
+      
     },
     {
       "text": "Wipe wipe wipe, and wash wash WASH!\nSplish-splash water — splashy splash!\nSoap on paws, rinse away,\nOliver grins, “Hooray, hooray!”",
-      "imageAsset": "images/oliver_07_wash_hands.png",
-      "audioAsset": "assets/audio/oliver/page_07.mp3"
+      "imageAsset": "images/oliver_07_wash_hands.png"
+      
     },
     {
       "text": "He jumps! He claps! He gives a roar!\n\"I’m a big bear now — hear me roarrrr!\"\nWith happy eyes and potty pride,\nOliver beams so big inside!",
-      "imageAsset": "images/oliver_08_celebrate.png",
-      "audioAsset": "assets/audio/oliver/page_08.mp3"
+      "imageAsset": "images/oliver_08_celebrate.png"
+      
     }
   ],
   "completedMessage": "🎉 Yay! Oliver tried and finished. Hooray for you, too!"

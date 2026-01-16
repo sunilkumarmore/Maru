@@ -11,6 +11,8 @@ import 'design_system/app_theme.dart';
 
 import 'repositories/story_repository.dart';
 import 'repositories/mock_story_repository.dart';
+import 'repositories/firestore_story_repository.dart';
+import 'repositories/composite_story_repository.dart';
 
 import 'repositories/progress_repository.dart';
 import 'repositories/composite_progress_repository.dart';
@@ -38,7 +40,10 @@ Future<void> main() async {
   );
 
   // ---------- Repositories ----------
-  final StoryRepository storyRepo = MockStoryRepository();
+  final StoryRepository storyRepo = CompositeStoryRepository(
+    primary: FirestoreStoryRepository(),
+    fallback: MockStoryRepository(),
+  );
 
   // final ProgressRepository progressRepo = CompositeProgressRepository(
   //   local: LocalProgressRepository(),
@@ -51,8 +56,10 @@ Future<void> main() async {
 );
 
   // ---------- Auth ----------
-  await configureAuthPersistenceForWeb();
-  await ensureAnonAuth();
+ // await configureAuthPersistenceForWeb();
+   // await ensureAnonAuth();
+  await ensureDevAuth(); //disable for production
+
 
   // ---------- Parent voice defaults ----------
   await ParentVoiceSettingsRepository().ensureDefaults();
@@ -182,6 +189,33 @@ class _SuzyAppState extends State<SuzyApp>
         // Dev only
         '/firebase-test': (_) => const FirebaseTestScreen(),
       },
+    );
+  }
+}
+
+
+
+Future<void> ensureDevAuth() async {
+  if (!kDebugMode) return; // ⛔ never runs in release
+
+  const email = 'dev@suzyapp.local';
+  const password = 'DevPassword123!';
+
+  final auth = FirebaseAuth.instance;
+
+  // Already signed in as dev
+  if (auth.currentUser?.email == email) return;
+
+  try {
+    await auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  } catch (_) {
+    // First time only
+    await auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
     );
   }
 }

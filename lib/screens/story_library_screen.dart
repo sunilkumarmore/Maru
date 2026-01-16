@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:suzyapp/models/story_progress.dart';
 import 'package:suzyapp/utils/asset_path.dart';
@@ -142,7 +143,7 @@ class _StoryLibraryScreenState extends State<StoryLibraryScreen> {
                       crossAxisCount: cols,
                       crossAxisSpacing: AppSpacing.medium,
                       mainAxisSpacing: AppSpacing.medium,
-                      childAspectRatio: 1.2,
+                      childAspectRatio: 1.05,
                     ),
                     itemBuilder: (context, i) {
                       final s = stories[i];
@@ -343,7 +344,9 @@ class _StoryCard extends StatelessWidget {
 
     // coverAsset is sometimes empty for now; treat it as empty string safely.
     //final cover = (story.coverAsset ?? '').trim();
-    final cover = AssetPath.normalize(story.coverAsset);
+    final coverRaw = story.coverAsset?.trim() ?? '';
+    final cover = AssetPath.normalize(coverRaw);
+    final coverIsRemote = AssetPath.isRemote(coverRaw);
 
     return InkWell(
       onTap: onTap,
@@ -383,16 +386,30 @@ class _StoryCard extends StatelessWidget {
                           topLeft: Radius.circular(AppRadius.large),
                           topRight: Radius.circular(AppRadius.large),
                         ),
-                        child: Image.asset(
-                          cover,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, e, __) {
-                            debugPrint('Cover load error for ${story.id}: $e');
-                            return Center(
-                              child: Icon(Icons.image_not_supported, size: 48, color: accent),
-                            );
-                          },
-                        ),
+                      child: coverIsRemote
+                          ? CachedNetworkImage(
+                              imageUrl: cover,
+                              fit: BoxFit.cover,
+                              fadeInDuration: const Duration(milliseconds: 200),
+                              placeholder: (_, __) =>
+                                  const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                              errorWidget: (_, e, __) {
+                                debugPrint('Cover load error for ${story.id}: $e');
+                                return Center(
+                                  child: Icon(Icons.image_not_supported, size: 48, color: accent),
+                                );
+                              },
+                            )
+                          : Image.asset(
+                              cover,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, e, __) {
+                                debugPrint('Cover load error for ${story.id}: $e');
+                                return Center(
+                                  child: Icon(Icons.image_not_supported, size: 48, color: accent),
+                                );
+                              },
+                            ),
                       )
                     else
                       Center(child: Icon(Icons.image, size: 48, color: accent)),
@@ -431,37 +448,41 @@ class _StoryCard extends StatelessWidget {
               flex: 3,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.small,
                   AppSpacing.xsmall,
-                  AppSpacing.small,
-                  AppSpacing.small,
+                  AppSpacing.xsmall,
+                  AppSpacing.xsmall,
+                  AppSpacing.xsmall,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       story.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
-                        height: 1.1,
+                        height: 1.05,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xsmall),
-                    Wrap(
-                      spacing: AppSpacing.xsmall,
-                      runSpacing: AppSpacing.xsmall,
-                      children: [
-                        _Badge(text: story.ageBand, color: accent),
-                        _Badge(
-                          text: story.language.toUpperCase(),
-                          color: AppColors.textSecondary,
-                          fill: AppColors.textSecondary.withOpacity(0.12),
-                        ),
-                      ],
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          _Badge(text: story.ageBand, color: accent),
+                          const SizedBox(width: AppSpacing.xsmall),
+                          _Badge(
+                            text: story.language.toUpperCase(),
+                            color: AppColors.textSecondary,
+                            fill: AppColors.textSecondary.withOpacity(0.12),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

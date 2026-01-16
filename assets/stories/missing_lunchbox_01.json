@@ -4,6 +4,7 @@
   "ageBand": "6–7",
   "language": "en",
   "difficulty": 3,
+    "coverAsset": "images/missing_lunchbox/lunchbox_cover.png",
   "pages": [
     {
       "text": "In the classroom, the teacher calls names.\n\"Ello Elephant,\" she says.\nEllo raises his trunk and smiles.",

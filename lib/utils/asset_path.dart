@@ -1,8 +1,16 @@
 class AssetPath {
+  static bool isRemote(String? raw) {
+    if (raw == null) return false;
+    final p = raw.trim().toLowerCase();
+    return p.startsWith('http://') || p.startsWith('https://');
+  }
+
   static String normalize(String? raw) {
     if (raw == null) return '';
     var p = raw.trim();
     if (p.isEmpty) return '';
+
+    if (isRemote(p)) return p;
 
     // Convert backslashes (Windows) to forward slashes
     p = p.replaceAll('\\', '/');

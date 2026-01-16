@@ -21,8 +21,8 @@ class Story {
 class StoryPage {
   final int index;
   final String text;
-  final String? imageUrl;
-  final String? imageAsset;
+  final String? imageUrl; // Firebase/remote URL (preferred)
+  final String? imageAsset; // local asset fallback
   final List<StoryChoice> choices;
   final String? audioUrl;
 final String? audioAsset;

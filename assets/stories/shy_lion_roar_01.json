@@ -4,6 +4,7 @@
   "ageBand": "4–5",
   "language": "en",
   "difficulty": 2,
+    "coverAsset": "images/shy_lion_roar/shy_lion_cover.png",
   "pages": [
     {
       "text": "This is Leo the lion.\nLeo is kind.\nLeo is quiet.",

@@ -17,6 +17,7 @@ import '../design_system/app_spacing.dart';
 import '../models/reading_progress.dart';
 import '../models/story.dart';
 import '../models/story_progress.dart';
+import '../models/parent_voice_settings.dart';
 import '../repositories/progress_repository.dart';
 import '../repositories/story_repository.dart';
 import '../widgets/adventure_scene.dart';
@@ -48,6 +49,7 @@ class _StoryReaderScreenState extends State<StoryReaderScreen> {
 
   bool _parentVoiceEnabled = false;
   String _parentVoiceId = '';
+  Map<String, dynamic> _elevenlabsSettings = ParentVoiceSettings.defaults().elevenlabsSettings;
 
   int _pageIndex = 0;
   bool _completionShown = false;
@@ -72,7 +74,7 @@ class _StoryReaderScreenState extends State<StoryReaderScreen> {
     _future = widget.storyRepository.getStoryById(widget.storyId);
 
     _parentVoiceService = ParentVoiceService(
-      speakEndpoint: 'https://us-central1-suzyapp.cloudfunctions.net/parentVoiceSpeak',
+      generateEndpoint: 'https://us-central1-suzyapp.cloudfunctions.net/generateNarration',
     );
 
     _loadParentVoiceSettings(); // loads toggle + voiceId
@@ -130,6 +132,11 @@ class _StoryReaderScreenState extends State<StoryReaderScreen> {
 
       final voiceRaw = data['elevenVoiceId'];
       _parentVoiceId = (voiceRaw is String) ? voiceRaw.trim() : '';
+
+      final rawSettings = data['elevenlabsSettings'];
+      _elevenlabsSettings = rawSettings is Map
+          ? Map<String, dynamic>.from(rawSettings)
+          : ParentVoiceSettings.defaults().elevenlabsSettings;
     });
 
     if (kDebugMode) {
@@ -180,7 +187,67 @@ class _StoryReaderScreenState extends State<StoryReaderScreen> {
     try {
       await _stopAllAudio();
 
-      // 1) URL first (primary)
+      // 0) Personalized audio from Firestore (per user)
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null && _parentVoiceEnabled && _parentVoiceId.isNotEmpty) {
+        try {
+          final doc = await FirebaseFirestore.instance
+              .doc('users/${user.uid}/personalized_audio/${story.id}')
+              .get();
+          final data = doc.data() ?? {};
+          final pages = (data['pages'] as Map?) ?? {};
+          final entry = pages['${page.index}'];
+          final personalizedUrl =
+              (entry is Map && entry['audioUrl'] is String) ? entry['audioUrl'] as String : null;
+          if (personalizedUrl != null && personalizedUrl.trim().isNotEmpty) {
+            if (kDebugMode) {
+              debugPrint('Personalized audio hit: ${story.id} page=${page.index}');
+            }
+            await _playUrl(personalizedUrl.trim());
+            return;
+          }
+        } catch (_) {
+          // fall through
+        }
+      }
+
+      // 1) Generate personalized narration if missing
+      if (_parentVoiceEnabled && _parentVoiceId.isNotEmpty) {
+        try {
+          if (kDebugMode) {
+            debugPrint(
+              'Generate narration: enabled=$_parentVoiceEnabled voiceId=$_parentVoiceId story=${story.id} page=${page.index}',
+            );
+          }
+          final generatedUrl = await _parentVoiceService.generateNarration(
+            voiceId: _parentVoiceId,
+            storyId: story.id,
+            pageIndex: page.index,
+            lang: _langForBackend(story.language),
+            text: page.text,
+            elevenlabsSettings: _elevenlabsSettings,
+          );
+          if (generatedUrl != null && generatedUrl.trim().isNotEmpty) {
+            if (kDebugMode) {
+              debugPrint('Generate narration success: ${story.id} page=${page.index}');
+            }
+            await _playUrl(generatedUrl.trim());
+            return;
+          }
+          if (kDebugMode) {
+            debugPrint('Generate narration returned empty url');
+          }
+        } catch (_) {
+          // fall through
+        }
+      }
+      if (kDebugMode) {
+        debugPrint(
+          'Narration skipped: enabled=$_parentVoiceEnabled voiceId=$_parentVoiceId',
+        );
+      }
+
+      // 2) URL first (primary)
       final url = page.audioUrl;
       if (url != null && url.trim().isNotEmpty) {
         try {
@@ -191,52 +258,7 @@ class _StoryReaderScreenState extends State<StoryReaderScreen> {
         }
       }
 
-      // 2) Parent AI voice (server cached/generated) - try once per session; degrade on any failure
-      if (_parentVoiceEnabled && !_parentVoiceDegraded && _parentVoiceId.isNotEmpty) {
-        try {
-          if (kDebugMode) {
-            debugPrint('🧠 ParentAI attempt: enabled=$_parentVoiceEnabled voiceId=$_parentVoiceId');
-          }
-
-          final generatedUrl = await _parentVoiceService.getOrCreatePageAudioUrl(
-            voiceId: _parentVoiceId,
-            storyId: story.id,
-            pageIndex: page.index,
-            lang: _langForBackend(story.language),
-            text: page.text,
-          );
-
-          if (kDebugMode) {
-            debugPrint('🧠 ParentAI generatedUrl=$generatedUrl');
-          }
-
-          if (generatedUrl == null || generatedUrl.trim().isEmpty) {
-            _parentVoiceDegraded = true;
-            if (kDebugMode) debugPrint('🧠 ParentAI degraded: empty url');
-          } else {
-            try {
-              await _playUrl(generatedUrl.trim());
-              return;
-            } catch (e, st) {
-              _parentVoiceDegraded = true;
-              if (kDebugMode) {
-                debugPrint('🧠 ParentAI play error: $e');
-                debugPrint('$st');
-                debugPrint('🧠 ParentAI degraded for this session');
-              }
-            }
-          }
-        } catch (e, st) {
-          _parentVoiceDegraded = true;
-          if (kDebugMode) {
-            debugPrint('🧠 ParentAI call error: $e');
-            debugPrint('$st');
-            debugPrint('🧠 ParentAI degraded for this session');
-          }
-        }
-      }
-
-      // 3) Asset second (offline pack)
+      // 3) Asset second (offline pack) (offline pack)
       final asset = AssetPath.normalize(page.audioAsset);
       if (asset.isNotEmpty) {
         try {
@@ -292,7 +314,7 @@ class _StoryReaderScreenState extends State<StoryReaderScreen> {
 
     final int clamped = (_pageIndex.clamp(0, story.pages.length - 1) as int);
     final bool isCompleted = clamped == story.pages.length - 1;
-try {
+    try {
     await widget.progressRepository.saveStoryProgress(
       StoryProgress(
         storyId: widget.storyId,
@@ -301,22 +323,23 @@ try {
         lastOpenedAt: DateTime.now(),
       ),
     );
-} catch (e) {
-    if (kDebugMode) debugPrint('saveStoryProgress failed (offline?): $e');
+    } catch (e) {
+      if (kDebugMode) debugPrint('saveStoryProgress failed (offline?): $e');
+    }
   }
 
-    if (isCompleted && !_completionShown && mounted) {
-      _completionShown = true;
-      await _stopAllAudio();
-      Navigator.pushNamed(
-        context,
-        '/complete',
-        arguments: StoryCompletionArgs(
-          storyId: widget.storyId,
-          storyTitle: story.title,
-        ),
-      );
-    }
+  Future<void> _showCompletion(Story story) async {
+    if (_completionShown || !mounted) return;
+    _completionShown = true;
+    await _stopAllAudio();
+    Navigator.pushNamed(
+      context,
+      '/complete',
+      arguments: StoryCompletionArgs(
+        storyId: widget.storyId,
+        storyTitle: story.title,
+      ),
+    );
   }
 
   Future<void> _setPage(int newIndex) async {
@@ -503,7 +526,9 @@ unawaited(_saveStoryProgress());
                       ),
                     ),
                     IconButton(
-                      onPressed: _pageIndex < story.pages.length - 1 ? () => _setPage(_pageIndex + 1) : null,
+                      onPressed: _pageIndex < story.pages.length - 1
+                          ? () => _setPage(_pageIndex + 1)
+                          : () => _showCompletion(story),
                       icon: const Icon(Icons.chevron_right),
                     ),
                   ],

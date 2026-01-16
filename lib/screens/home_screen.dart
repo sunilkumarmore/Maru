@@ -59,10 +59,6 @@ class _HomeScreenState extends State<HomeScreen> {
     await Navigator.pushNamed(context, '/parent-summary');
   }
 
-Future<void> _openParentVoiceSettings() async {
-  await Navigator.pushNamed(context, '/parent-voice');
-}
-
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
@@ -153,14 +149,31 @@ Future<void> _openParentVoiceSettings() async {
                 child: Wrap(
                   spacing: 10,
                   children: [
-                    // Optional: direct shortcut to voice settings
-                    TextButton(
-                      onPressed: _openParentVoiceSettings,
-                      child: const Text('Voice Settings'),
-                    ),
-                    TextButton(
-                      onPressed: _openParentSummary,
-                      child: const Text('Parents'),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(AppRadius.large),
+                      onTap: _openParentSummary,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.large,
+                          vertical: AppSpacing.medium,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(AppRadius.large),
+                          border: Border.all(color: AppColors.outline),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.lock_outline, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Parents',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
