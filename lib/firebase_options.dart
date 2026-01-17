@@ -54,8 +54,6 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyD37cJd8OwJBMqSrSq2VvL3I1LA1fMc5OY',
-    appId: '1:604575451488:ios:97381720ea056ae223b605',
     messagingSenderId: '604575451488',
     projectId: 'suzyapp',
     storageBucket: 'suzyapp.firebasestorage.app',
@@ -63,8 +61,6 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyD37cJd8OwJBMqSrSq2VvL3I1LA1fMc5OY',
-    appId: '1:604575451488:ios:97381720ea056ae223b605',
     messagingSenderId: '604575451488',
     projectId: 'suzyapp',
     storageBucket: 'suzyapp.firebasestorage.app',
@@ -72,8 +68,6 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyC5JHkysQhPIWx0P9hw23QwLEk1NEFMxhk',
-    appId: '1:604575451488:web:1da2230ce12c52f923b605',
     messagingSenderId: '604575451488',
     projectId: 'suzyapp',
     authDomain: 'suzyapp.firebaseapp.com',
