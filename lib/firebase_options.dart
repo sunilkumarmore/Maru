@@ -41,8 +41,6 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyC5JHkysQhPIWx0P9hw23QwLEk1NEFMxhk',
-    appId: '1:604575451488:web:ae58dd1c77a6d3db23b605',
     messagingSenderId: '604575451488',
     projectId: 'suzyapp',
     authDomain: 'suzyapp.firebaseapp.com',
@@ -50,8 +48,6 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyB4r5hjKv79dc3bqJvew0nVEe7KZRCPpHM',
-    appId: '1:604575451488:android:987d6a1f3bdcc7cd23b605',
     messagingSenderId: '604575451488',
     projectId: 'suzyapp',
     storageBucket: 'suzyapp.firebasestorage.app',
